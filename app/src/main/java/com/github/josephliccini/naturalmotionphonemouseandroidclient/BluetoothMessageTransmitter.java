@@ -30,7 +30,7 @@ public class BluetoothMessageTransmitter {
     }
 
     public void sendMessage(String message) {
-        String delimitedMessage = message + "<>";
+        String delimitedMessage = message + "\n";
         byte[] bytes = delimitedMessage.getBytes();
         writeOut(bytes);
     }

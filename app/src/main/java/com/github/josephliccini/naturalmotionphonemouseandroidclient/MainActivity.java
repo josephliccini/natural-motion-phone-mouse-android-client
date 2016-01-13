@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import com.google.gson.Gson;
+
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
@@ -52,13 +54,30 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void run() {
-                int count = 0;
+                double x = 0;
+                double y = 0;
+                double iter = 1;
+                double sign = 1;
+
+                DeltaCoordinate coord = new DeltaCoordinate(x, y);
+                Gson gson = new Gson();
+
                 while (true) {
-                    System.out.println("Test: " + count++);
-                    io.sendMessage("Test: " + count + "\n");
+                    String json = gson.toJson(coord);
+
+                    io.sendMessage(json);
+
                     try {
-                        TimeUnit.SECONDS.sleep(4);
+                        TimeUnit.MILLISECONDS.sleep(200);
                     } catch (InterruptedException ex) { }
+
+                    x = iter;
+
+                    // sign = -sign;
+
+                    x *= sign;
+
+                    coord.setDisplacementX(x);
                 }
             }
 
