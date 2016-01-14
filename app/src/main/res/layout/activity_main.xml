@@ -10,8 +10,25 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.github.josephliccini.naturalmotionphonemouseandroidclient.MainActivity">
 
-    <TextView
-        android:text="Hello World!"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="71dp"
+            android:layout_weight="1"
+            android:text="Left Click"
+            android:id="@+id/button" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="70dp"
+            android:text="Right Click"
+            android:layout_weight="1"
+            android:id="@+id/button2" />
+    </LinearLayout>
+
 </RelativeLayout>

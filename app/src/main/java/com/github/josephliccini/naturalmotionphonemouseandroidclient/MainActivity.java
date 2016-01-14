@@ -56,8 +56,6 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 double x = 0;
                 double y = 0;
-                double iter = 1;
-                double sign = 1;
 
                 DeltaCoordinate coord = new DeltaCoordinate(x, y);
                 Gson gson = new Gson();
@@ -70,12 +68,6 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         TimeUnit.MILLISECONDS.sleep(200);
                     } catch (InterruptedException ex) { }
-
-                    x = iter;
-
-                    // sign = -sign;
-
-                    x *= sign;
 
                     coord.setDisplacementX(x);
                 }
