@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.View;
 
 import com.google.gson.Gson;
 
@@ -14,6 +16,9 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter;
 
+    private final BluetoothIO io = new BluetoothIO(this, null);
+    private final Gson gson = new Gson();
+
     private static final int REQUEST_CONNECT_DEVICE = 2;
 
     @Override
@@ -21,9 +26,48 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setButtonTouchListeners();
+
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         getDevice();
+    }
+
+    private void setButtonTouchListeners() {
+        View leftButton = this.findViewById(R.id.left_click_button);
+
+        leftButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        io.sendMessage(gson.toJson(MouseButtonAction.LEFT_PRESS));
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        io.sendMessage(gson.toJson(MouseButtonAction.LEFT_RELEASE));
+                        return true;
+                }
+                return false;
+            }
+        });
+
+        View rightButton = this.findViewById(R.id.right_click_button);
+
+        rightButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        io.sendMessage(gson.toJson(MouseButtonAction.RIGHT_PRESS));
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        io.sendMessage(gson.toJson(MouseButtonAction.RIGHT_RELEASE));
+                        return true;
+                }
+                return false;
+            }
+        });
+
     }
 
     private void getDevice() {
@@ -46,19 +90,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendMessagesOverBT(BluetoothDevice device) {
-        final BluetoothIO io = new BluetoothIO(this, null);
-
         io.connect(device);
 
         new Thread( new Runnable() {
 
             @Override
             public void run() {
-                double x = 0;
-                double y = 0;
+                double x = 1;
+                double y = -1;
 
-                DeltaCoordinate coord = new DeltaCoordinate(x, y);
-                Gson gson = new Gson();
+                DeltaPair coord = new DeltaPair(x, y);
 
                 while (true) {
                     String json = gson.toJson(coord);

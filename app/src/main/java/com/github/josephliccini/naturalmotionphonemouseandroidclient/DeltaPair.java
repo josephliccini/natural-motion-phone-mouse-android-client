@@ -3,11 +3,12 @@
  */
 package com.github.josephliccini.naturalmotionphonemouseandroidclient;
 
-public class DeltaCoordinate {
+public class DeltaPair extends MouseMessage {
     private double displacementX;
     private double displacementY;
 
-    public DeltaCoordinate(double displacementX, double displacementY) {
+    public DeltaPair(double displacementX, double displacementY) {
+        super("MouseTranslation");
         this.displacementX = displacementX;
         this.displacementY = displacementY;
     }

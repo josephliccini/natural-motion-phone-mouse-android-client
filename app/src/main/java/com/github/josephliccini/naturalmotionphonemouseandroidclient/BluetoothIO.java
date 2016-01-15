@@ -31,7 +31,7 @@ public class BluetoothIO {
         connectionThread.start();
     }
 
-    public void sendMessage(String message) {
+    public synchronized void sendMessage(String message) {
         BluetoothSocket tmpSocket = null;
         try {
             tmpSocket = this.mBluetoothConnector.getSocket();
