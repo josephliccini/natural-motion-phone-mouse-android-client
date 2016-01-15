@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -35,15 +36,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void setButtonTouchListeners() {
         View leftButton = this.findViewById(R.id.left_click_button);
+        final Vibrator vib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
 
         leftButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        vib.vibrate(25);
                         io.sendMessage(gson.toJson(MouseButtonAction.LEFT_PRESS));
                         return true;
                     case MotionEvent.ACTION_UP:
+                        vib.vibrate(25);
                         io.sendMessage(gson.toJson(MouseButtonAction.LEFT_RELEASE));
                         return true;
                 }
@@ -58,9 +62,11 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        vib.vibrate(25);
                         io.sendMessage(gson.toJson(MouseButtonAction.RIGHT_PRESS));
                         return true;
                     case MotionEvent.ACTION_UP:
+                        vib.vibrate(25);
                         io.sendMessage(gson.toJson(MouseButtonAction.RIGHT_RELEASE));
                         return true;
                 }
