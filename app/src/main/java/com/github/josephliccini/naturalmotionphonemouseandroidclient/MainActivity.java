@@ -15,6 +15,11 @@ import com.google.gson.Gson;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
+
+    static {
+        System.loadLibrary("opencv_java3");
+    }
+
     private BluetoothAdapter mBluetoothAdapter;
 
     private final BluetoothIO io = new BluetoothIO(this, null);

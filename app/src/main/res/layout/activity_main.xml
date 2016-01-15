@@ -11,24 +11,33 @@
     tools:context="com.github.josephliccini.naturalmotionphonemouseandroidclient.MainActivity">
 
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:id="@+id/LinearLayout1">
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="71dp"
-            android:layout_weight="1"
-            android:text="Left Click"
-            android:id="@+id/left_click_button" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="71dp"
+                android:layout_weight="1"
+                android:text="Left Click"
+                android:id="@+id/left_click_button" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="70dp"
-            android:text="Right Click"
-            android:layout_weight="1"
-            android:id="@+id/right_click_button" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="70dp"
+                android:text="Right Click"
+                android:layout_weight="1"
+                android:id="@+id/right_click_button" />
+        </LinearLayout>
+        <org.opencv.android.JavaCameraView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignTop="@id/LinearLayout1"/>
     </LinearLayout>
-
 </RelativeLayout>
