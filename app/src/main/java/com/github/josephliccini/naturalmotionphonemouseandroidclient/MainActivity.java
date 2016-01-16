@@ -7,14 +7,26 @@ import android.content.Intent;
 import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.google.gson.Gson;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener {
 
     static {
         System.loadLibrary("opencv_java3");
@@ -25,14 +37,24 @@ public class MainActivity extends AppCompatActivity {
     private final BluetoothIO io = new BluetoothIO(this, null);
     private final Gson gson = new Gson();
 
+    private CameraBridgeViewBase mOpenCvCameraView;
+
     private static final int REQUEST_CONNECT_DEVICE = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         setContentView(R.layout.activity_main);
 
         setButtonTouchListeners();
+
+        this.mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.open_cv_camera);
+
+        this.mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+        this.mOpenCvCameraView.setCvCameraViewListener(this);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -65,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         rightButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()) {
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         vib.vibrate(25);
                         io.sendMessage(gson.toJson(MouseButtonAction.RIGHT_PRESS));
@@ -126,5 +148,43 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }).start();
+    }
+
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                    Log.i("MAIN_ACTIVITY", "OpenCV loaded successfully");
+                    mOpenCvCameraView.enableFpsMeter();
+                    mOpenCvCameraView.enableView();
+                    break;
+                default:
+                    super.onManagerConnected(status);
+                    break;
+            }
+        }
+    };
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
+    }
+
+    @Override
+    public void onCameraViewStarted(int width, int height) {
+
+    }
+
+    @Override
+    public void onCameraViewStopped() {
+
+    }
+
+    @Override
+    public Mat onCameraFrame(Mat inputFrame) {
+        return inputFrame;
     }
 }

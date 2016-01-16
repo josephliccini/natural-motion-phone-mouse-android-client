@@ -38,6 +38,7 @@
         <org.opencv.android.JavaCameraView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignTop="@id/LinearLayout1"/>
+            android:layout_alignTop="@id/LinearLayout1"
+            android:id="@+id/open_cv_camera" />
     </LinearLayout>
 </RelativeLayout>
