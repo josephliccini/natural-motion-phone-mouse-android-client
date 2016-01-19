@@ -20,13 +20,28 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.video.DenseOpticalFlow;
+import org.opencv.video.Video;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener {
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     static {
         System.loadLibrary("opencv_java3");
@@ -39,7 +54,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private CameraBridgeViewBase mOpenCvCameraView;
 
+    private Mat mPrevFrame;
+
+    private MatOfPoint2f mFeaturesToTrack;
+    private MatOfPoint2f mFeaturesToTrackPrev;
+
     private static final int REQUEST_CONNECT_DEVICE = 2;
+    FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        getDevice();
+        // getDevice();
     }
 
     private void setButtonTouchListeners() {
@@ -68,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         leftButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()) {
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         vib.vibrate(25);
                         io.sendMessage(gson.toJson(MouseButtonAction.LEFT_PRESS));
@@ -150,6 +171,40 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }).start();
     }
 
+    private void initializeFeaturesToTrack() {
+        Mat img = null;
+
+        try {
+            img = Utils.loadResource(MainActivity.this, R.drawable.circle);
+        } catch (IOException ex) {
+            Log.e("LoadingPointOfInterest", ex.getMessage());
+            return;
+        }
+
+        this.mFeaturesToTrack = new MatOfPoint2f();
+
+        detectFeatures(img, this.mFeaturesToTrack);
+    }
+
+    private void detectFeatures(Mat img, MatOfPoint2f keypoints) {
+        MatOfKeyPoint tmp = new MatOfKeyPoint();
+
+        this.mFeatureDetector.detect(img, tmp);
+
+        convertToPoint(tmp).copyTo(keypoints);
+    }
+
+    private MatOfPoint2f convertToPoint(MatOfKeyPoint mat) {
+        KeyPoint[] arr = mat.toArray();
+        Point[] pointArr = new Point[arr.length];
+
+        for(int i = 0; i < arr.length; ++i) {
+            pointArr[i] = arr[i].pt;
+        }
+
+        return new MatOfPoint2f(pointArr);
+    }
+
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
         @Override
@@ -157,6 +212,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
                     Log.i("MAIN_ACTIVITY", "OpenCV loaded successfully");
+                    initializeFeaturesToTrack();
                     mOpenCvCameraView.enableFpsMeter();
                     mOpenCvCameraView.enableView();
                     break;
@@ -183,8 +239,45 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     }
 
+    private MatOfKeyPoint convertToKeyPoint(MatOfPoint2f mat) {
+        Point[] arr = mat.toArray();
+        KeyPoint[] pointArr = new KeyPoint[arr.length];
+
+        for(int i = 0; i < arr.length; ++i) {
+            Point p = arr[i];
+            pointArr[i] = new KeyPoint((float)p.x, (float)p.y, 1.0f);
+        }
+
+        return new MatOfKeyPoint(pointArr);
+    }
+
     @Override
-    public Mat onCameraFrame(Mat inputFrame) {
-        return inputFrame;
+    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        Mat greyMat = inputFrame.gray();
+
+        MatOfPoint2f keypointsFound = new MatOfPoint2f();
+        MatOfByte keypointStatus = new MatOfByte();
+        MatOfFloat err = new MatOfFloat();
+        Size winSize = new Size(25, 25);
+        int maxLevel = 3;
+
+        if (mPrevFrame == null) {
+            mPrevFrame = new Mat();
+
+            greyMat.copyTo(mPrevFrame);
+            return inputFrame.gray();
+        }
+
+        detectFeatures(greyMat, keypointsFound);
+
+        try {
+            Video.calcOpticalFlowPyrLK(mPrevFrame, greyMat, mFeaturesToTrack, keypointsFound, keypointStatus, err, winSize, maxLevel);
+        } catch (Exception ex) {
+            Log.d("ERROR", ex.getMessage());
+        }
+
+        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
+
+        return greyMat;
     }
 }
