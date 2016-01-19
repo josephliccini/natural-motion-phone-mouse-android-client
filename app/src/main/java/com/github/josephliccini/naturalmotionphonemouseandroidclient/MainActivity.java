@@ -34,6 +34,7 @@ import org.opencv.features2d.Features2d;
 import org.opencv.video.Video;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -74,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        // getDevice();
+        getDevice();
     }
 
     private void setButtonTouchListeners() {
@@ -134,10 +135,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-                sendMessagesOverBT(device);
+                io.connect(device);
         }
     }
 
+    /*
     private void sendMessagesOverBT(BluetoothDevice device) {
         io.connect(device);
 
@@ -165,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         }).start();
     }
+    */
 
     private void initializeFeaturesToTrack() {
         Mat img = null;
@@ -251,10 +254,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Mat greyMat = inputFrame.gray();
 
         MatOfPoint2f keypointsFound = new MatOfPoint2f();
-        MatOfByte keypointStatus = new MatOfByte();
-        MatOfFloat err = new MatOfFloat();
-        Size winSize = new Size(25, 25);
-        int maxLevel = 3;
 
         detectFeatures(greyMat, keypointsFound);
 
@@ -268,21 +267,32 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             return greyMat;
         }
 
-        /*
-        try {
-            Video.calcOpticalFlowPyrLK(mPrevFrame, greyMat, mPrevKeypointsFound, keypointsFound, keypointStatus, err, winSize, maxLevel);
-            Log.d("NOERROR", "There was no error");
-        } catch (Exception ex) {
-            Log.d("ERROR", ex.getMessage());
-        }
-        */
-
         Log.d("CheckSize", "Size: " + keypointsFound.toList().size());
+        List<Point> prevKeypointList = mPrevKeypointsFound.toList();
+        List<Point> keypointList = keypointsFound.toList();
 
-        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(0, 0, 255), 3);
+        if ((prevKeypointList.size() == 1) && (keypointList.size() == 1)) {
+            DeltaPair coord = calculateDisplacement(prevKeypointList.get(0), keypointList.get(0));
+
+            String json = gson.toJson(coord);
+
+            Log.d("Sending", json);
+
+            io.sendMessage(json);
+        }
+
+        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(0, 255, 0), 3);
 
         greyMat.copyTo(mPrevFrame);
+        keypointsFound.copyTo(mPrevKeypointsFound);
 
         return greyMat;
     }
+
+    private DeltaPair calculateDisplacement(Point a, Point b) {
+        // Camera films in landscape mode, so swap x and y
+        // Camera also films left at the bottom, so swap ax and bx
+        return new DeltaPair(b.y - a.y, a.x - b.x);
+    }
+
 }
