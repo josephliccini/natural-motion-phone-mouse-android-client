@@ -9,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
@@ -21,21 +20,17 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.video.DenseOpticalFlow;
 import org.opencv.video.Video;
 
 import java.io.IOException;
@@ -57,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Mat mPrevFrame;
 
     private MatOfPoint2f mFeaturesToTrack;
-    private MatOfPoint2f mFeaturesToTrackPrev;
+    private MatOfPoint2f mPrevKeypointsFound;
 
     private static final int REQUEST_CONNECT_DEVICE = 2;
     FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
@@ -261,22 +256,32 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Size winSize = new Size(25, 25);
         int maxLevel = 3;
 
-        if (mPrevFrame == null) {
-            mPrevFrame = new Mat();
-
-            greyMat.copyTo(mPrevFrame);
-            return inputFrame.gray();
-        }
-
         detectFeatures(greyMat, keypointsFound);
 
+        if (mPrevFrame == null) {
+            mPrevFrame = new Mat();
+            mPrevKeypointsFound = new MatOfPoint2f();
+
+            greyMat.copyTo(mPrevFrame);
+            keypointsFound.copyTo(mPrevKeypointsFound);
+
+            return greyMat;
+        }
+
+        /*
         try {
-            Video.calcOpticalFlowPyrLK(mPrevFrame, greyMat, mFeaturesToTrack, keypointsFound, keypointStatus, err, winSize, maxLevel);
+            Video.calcOpticalFlowPyrLK(mPrevFrame, greyMat, mPrevKeypointsFound, keypointsFound, keypointStatus, err, winSize, maxLevel);
+            Log.d("NOERROR", "There was no error");
         } catch (Exception ex) {
             Log.d("ERROR", ex.getMessage());
         }
+        */
 
-        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
+        Log.d("CheckSize", "Size: " + keypointsFound.toList().size());
+
+        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(0, 0, 255), 3);
+
+        greyMat.copyTo(mPrevFrame);
 
         return greyMat;
     }
