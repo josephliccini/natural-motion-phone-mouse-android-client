@@ -22,20 +22,16 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
-import org.opencv.video.Video;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -57,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private static final int REQUEST_CONNECT_DEVICE = 2;
     FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
+    private final ShortestYDistanceComparator comp = new ShortestYDistanceComparator();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +115,52 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         });
 
+        final View mouseWheelButton = this.findViewById(R.id.mouse_wheel_button);
+
+        mouseWheelButton.setOnTouchListener(new View.OnTouchListener() {
+
+            double initialY = 0.0;
+            double sum = 0.0;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initialY = event.getY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        double eventY = event.getY();
+                        Log.d("EventY", "" + eventY);
+                        Log.d("InitialY", "" + initialY);
+                        if (eventY > initialY) {
+                            Log.d("MouseWheelGT", "" + sum);
+                            sum -= eventY / mouseWheelButton.getHeight();
+                        } else if (eventY < initialY) {
+                            Log.d("MouseWheelLT", "" + sum);
+                            sum += eventY / mouseWheelButton.getHeight();
+                        }
+
+                        if (sum >= .85) {
+                            MouseWheelDelta moueWheelDelta = new MouseWheelDelta("MouseWheelUp", 1);
+                            io.sendMessage(gson.toJson(moueWheelDelta));
+                            return true;
+                        }
+                        else if (sum <= -.85) {
+                            MouseWheelDelta moueWheelDelta = new MouseWheelDelta("MouseWheelDown", 1);
+                            io.sendMessage(gson.toJson(moueWheelDelta));
+                            return true;
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        sum = 0.0;
+                        initialY = 0.0;
+                        return true;
+                }
+                return false;
+            }
+        });
+
     }
 
     private void getDevice() {
@@ -138,36 +181,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 io.connect(device);
         }
     }
-
-    /*
-    private void sendMessagesOverBT(BluetoothDevice device) {
-        io.connect(device);
-
-        new Thread( new Runnable() {
-
-            @Override
-            public void run() {
-                double x = 1;
-                double y = -1;
-
-                DeltaPair coord = new DeltaPair(x, y);
-
-                while (true) {
-                    String json = gson.toJson(coord);
-
-                    io.sendMessage(json);
-
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(200);
-                    } catch (InterruptedException ex) { }
-
-                    coord.setDisplacementX(x);
-                }
-            }
-
-        }).start();
-    }
-    */
 
     private void initializeFeaturesToTrack() {
         Mat img = null;
@@ -267,21 +280,23 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             return greyMat;
         }
 
-        Log.d("CheckSize", "Size: " + keypointsFound.toList().size());
         List<Point> prevKeypointList = mPrevKeypointsFound.toList();
         List<Point> keypointList = keypointsFound.toList();
 
         if ((prevKeypointList.size() == 1) && (keypointList.size() == 1)) {
-            DeltaPair coord = calculateDisplacement(prevKeypointList.get(0), keypointList.get(0));
+            sendDisplacementMessage(prevKeypointList.get(0), keypointList.get(0));
 
-            String json = gson.toJson(coord);
+       } else if ((prevKeypointList.size()) > 1 &&
+                  (keypointList.size() > 1) /*&&*/
+                  /* (keypointList.size() == prevKeypointList.size()) */) {
 
-            Log.d("Sending", json);
+            Collections.sort(prevKeypointList, this.comp);
+            Collections.sort(keypointList, this.comp);
 
-            io.sendMessage(json);
+            sendDisplacementMessage(prevKeypointList.get(0), keypointList.get(0));
         }
 
-        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(0, 255, 0), 3);
+        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
 
         greyMat.copyTo(mPrevFrame);
         keypointsFound.copyTo(mPrevKeypointsFound);
@@ -293,6 +308,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // Camera films in landscape mode, so swap x and y
         // Camera also films left at the bottom, so swap ax and bx
         return new DeltaPair(b.y - a.y, a.x - b.x);
+    }
+
+    private void sendDisplacementMessage(Point a, Point b) {
+        DeltaPair coord = calculateDisplacement(a, b);
+
+        String json = gson.toJson(coord);
+
+        Log.d("Sending", json);
+
+        io.sendMessage(json);
     }
 
 }
