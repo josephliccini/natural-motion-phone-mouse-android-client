@@ -118,43 +118,46 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         final View mouseWheelButton = this.findViewById(R.id.mouse_wheel_button);
 
         mouseWheelButton.setOnTouchListener(new View.OnTouchListener() {
-
-            double initialY = 0.0;
-            double sum = 0.0;
+            private double initialY;
+            private double prevY;
+            private final double THRESHOLD = 12.0;
+            private double offset;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         initialY = event.getY();
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        double eventY = event.getY();
-                        Log.d("EventY", "" + eventY);
-                        Log.d("InitialY", "" + initialY);
-                        if (eventY > initialY) {
-                            Log.d("MouseWheelGT", "" + sum);
-                            sum -= eventY / mouseWheelButton.getHeight();
-                        } else if (eventY < initialY) {
-                            Log.d("MouseWheelLT", "" + sum);
-                            sum += eventY / mouseWheelButton.getHeight();
-                        }
+                        prevY = 0.0;
+                        offset = event.getY();
+                        return true;
 
-                        if (sum >= .85) {
-                            MouseWheelDelta moueWheelDelta = new MouseWheelDelta("MouseWheelUp", 1);
-                            io.sendMessage(gson.toJson(moueWheelDelta));
-                            return true;
+                    case MotionEvent.ACTION_MOVE:
+                        double eventY = event.getY() - offset;
+                        Log.d("JOE EVENTY", "" + eventY);
+                        Log.d("JOE PREVY", "" + prevY);
+                        Log.d("JOE INITIALY", "" + initialY);
+                        Log.d("JOE OFFSET", "" + offset);
+
+                        if (Math.abs(eventY - initialY) > THRESHOLD) {
+                            MouseWheelDelta moueWheelDelta = null;
+
+                            if (eventY < prevY) {
+                                moueWheelDelta = new MouseWheelDelta("MouseWheelUp", 1);
+                            } else if (eventY > prevY) {
+                                moueWheelDelta = new MouseWheelDelta("MouseWheelDown", 1);
+                            }
+
+                            if (moueWheelDelta != null) {
+                                initialY = eventY;
+                                io.sendMessage(gson.toJson(moueWheelDelta));
+                                vib.vibrate(1);
+                            }
+                            prevY = eventY;
                         }
-                        else if (sum <= -.85) {
-                            MouseWheelDelta moueWheelDelta = new MouseWheelDelta("MouseWheelDown", 1);
-                            io.sendMessage(gson.toJson(moueWheelDelta));
-                            return true;
-                        }
-                        break;
+                        return true;
+
                     case MotionEvent.ACTION_UP:
-                        sum = 0.0;
-                        initialY = 0.0;
                         return true;
                 }
                 return false;
