@@ -134,18 +134,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                     case MotionEvent.ACTION_MOVE:
                         double eventY = event.getY() - offset;
-                        Log.d("JOE EVENTY", "" + eventY);
-                        Log.d("JOE PREVY", "" + prevY);
-                        Log.d("JOE INITIALY", "" + initialY);
-                        Log.d("JOE OFFSET", "" + offset);
 
                         if (Math.abs(eventY - initialY) > THRESHOLD) {
                             MouseWheelDelta moueWheelDelta = null;
 
                             if (eventY < prevY) {
-                                moueWheelDelta = new MouseWheelDelta("MouseWheelUp", 1);
+                                moueWheelDelta = MouseWheelDelta.MOUSE_WHEEL_UP;
                             } else if (eventY > prevY) {
-                                moueWheelDelta = new MouseWheelDelta("MouseWheelDown", 1);
+                                moueWheelDelta = MouseWheelDelta.MOUSE_WHEEL_DOWN;
                             }
 
                             if (moueWheelDelta != null) {
