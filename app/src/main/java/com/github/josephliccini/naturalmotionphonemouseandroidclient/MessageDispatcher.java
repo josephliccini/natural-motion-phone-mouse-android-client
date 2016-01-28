@@ -24,17 +24,7 @@ public class MessageDispatcher {
     }
 
     public void sendDisplacementMessage(DeltaPair coord) {
-        double combinedDisplacement = Math.abs(coord.getDisplacementX()) + Math.abs(coord.getDisplacementY());
-
-        if (combinedDisplacement > 4.0) {
-            shortMessageCount = 0;
-        } else {
-            ++shortMessageCount;
-        }
-
-        if (shortMessageCount < 2) {
-            sendMessage(gson.toJson(coord));
-        }
+        sendMessage(gson.toJson(coord));
     }
 
     public void sendMouseButtonAction(MouseButtonAction mouseButtonAction) {
