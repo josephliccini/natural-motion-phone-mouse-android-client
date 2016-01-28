@@ -13,8 +13,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.google.gson.Gson;
-
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
@@ -41,9 +39,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private BluetoothAdapter mBluetoothAdapter;
 
-    private final BluetoothIO io = new BluetoothIO(this, null);
-    private final Gson gson = new Gson();
-
     private CameraBridgeViewBase mOpenCvCameraView;
 
     private Mat mPrevFrame;
@@ -54,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final int REQUEST_CONNECT_DEVICE = 2;
     FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
     private final ShortestYDistanceComparator comp = new ShortestYDistanceComparator();
+    private MessageDispatcher messageDispatcher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,11 +81,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         vib.vibrate(25);
-                        io.sendMessage(gson.toJson(MouseButtonAction.LEFT_PRESS));
+                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.LEFT_PRESS);
                         return true;
                     case MotionEvent.ACTION_UP:
                         vib.vibrate(25);
-                        io.sendMessage(gson.toJson(MouseButtonAction.LEFT_RELEASE));
+                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.LEFT_RELEASE);
                         return true;
                 }
                 return false;
@@ -104,11 +100,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         vib.vibrate(25);
-                        io.sendMessage(gson.toJson(MouseButtonAction.RIGHT_PRESS));
+                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.RIGHT_PRESS);
                         return true;
                     case MotionEvent.ACTION_UP:
                         vib.vibrate(25);
-                        io.sendMessage(gson.toJson(MouseButtonAction.RIGHT_RELEASE));
+                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.RIGHT_RELEASE);
                         return true;
                 }
                 return false;
@@ -125,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch(event.getAction()) {
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         initialY = event.getY();
                         prevY = 0.0;
@@ -146,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                             if (moueWheelDelta != null) {
                                 initialY = eventY;
-                                io.sendMessage(gson.toJson(moueWheelDelta));
+                                messageDispatcher.sendMouseWheelMessage(moueWheelDelta);
                                 vib.vibrate(1);
                             }
                             prevY = eventY;
@@ -177,7 +173,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-                io.connect(device);
+                BluetoothIO io = new BluetoothIO(this, null);
+                this.messageDispatcher = new MessageDispatcher(io, device);
         }
     }
 
@@ -283,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         List<Point> keypointList = keypointsFound.toList();
 
         if ((prevKeypointList.size() == 1) && (keypointList.size() == 1)) {
-            sendDisplacementMessage(prevKeypointList.get(0), keypointList.get(0));
+            this.messageDispatcher.sendDisplacementMessage(calculateDisplacement(prevKeypointList.get(0), keypointList.get(0)));
 
        } else if ((prevKeypointList.size()) > 1 &&
                   (keypointList.size() > 1) /*&&*/
@@ -292,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Collections.sort(prevKeypointList, this.comp);
             Collections.sort(keypointList, this.comp);
 
-            sendDisplacementMessage(prevKeypointList.get(0), keypointList.get(0));
+            this.messageDispatcher.sendDisplacementMessage(calculateDisplacement(prevKeypointList.get(0), keypointList.get(0)));
         }
 
         Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
@@ -307,16 +304,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // Camera films in landscape mode, so swap x and y
         // Camera also films left at the bottom, so swap ax and bx
         return new DeltaPair(b.y - a.y, a.x - b.x);
-    }
-
-    private void sendDisplacementMessage(Point a, Point b) {
-        DeltaPair coord = calculateDisplacement(a, b);
-
-        String json = gson.toJson(coord);
-
-        Log.d("Sending", json);
-
-        io.sendMessage(json);
     }
 
 }
