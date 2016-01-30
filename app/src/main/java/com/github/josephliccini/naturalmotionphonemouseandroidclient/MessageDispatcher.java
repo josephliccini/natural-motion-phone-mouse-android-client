@@ -19,7 +19,6 @@ public class MessageDispatcher {
     }
 
     private void sendMessage(String json) {
-        Log.d("Sending", json);
         this.io.sendMessage(json);
     }
 
@@ -35,4 +34,7 @@ public class MessageDispatcher {
         sendMessage(gson.toJson(mouseWheelDelta));
     }
 
+    public void sendMouseSensitivityMessage(MouseSensitivityMessage message) {
+        sendMessage(gson.toJson(message));
+    }
 }

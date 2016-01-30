@@ -8,10 +8,12 @@ import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -46,10 +48,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private MatOfPoint2f mFeaturesToTrack;
     private MatOfPoint2f mPrevKeypointsFound;
 
+    private double mouseSensitivity = 1.5;
+
     private static final int REQUEST_CONNECT_DEVICE = 2;
     FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
     private final ShortestYDistanceComparator comp = new ShortestYDistanceComparator();
     private MessageDispatcher messageDispatcher;
+    private TextView mouseSensitivityView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +73,34 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
+        this.mouseSensitivityView = (TextView) findViewById(R.id.sensitivity_indicator);
+        setMouseSensitivityText();
+
         getDevice();
+    }
+
+    public synchronized boolean onKeyDown(int keyCode, KeyEvent event){
+
+        boolean recognized = false;
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP){
+            this.mouseSensitivity += 0.25;
+            recognized = true;
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
+            this.mouseSensitivity -= 0.25;
+            recognized = true;
+        }
+
+        if (recognized) {
+            MouseSensitivityMessage message = new MouseSensitivityMessage(this.mouseSensitivity);
+            this.messageDispatcher.sendMouseSensitivityMessage(message);
+            setMouseSensitivityText();
+        }
+        return recognized || super.onKeyDown(keyCode, event);
+    }
+
+    private void setMouseSensitivityText() {
+        String unformatted = getResources().getString(R.string.sensitivity_indicator_text);
+        this.mouseSensitivityView.setText(String.format(unformatted, this.mouseSensitivity));
     }
 
     private void setButtonTouchListeners() {
@@ -143,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                             if (moueWheelDelta != null) {
                                 initialY = eventY;
                                 messageDispatcher.sendMouseWheelMessage(moueWheelDelta);
-                                vib.vibrate(1);
+                                vib.vibrate(5);
                             }
                             prevY = eventY;
                         }
