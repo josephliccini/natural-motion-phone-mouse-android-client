@@ -14,6 +14,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private double mouseSensitivity = 1.5;
 
     private static final int REQUEST_CONNECT_DEVICE = 2;
-    FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
+    private FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
     private final ShortestYDistanceComparator comp = new ShortestYDistanceComparator();
     private MessageDispatcher messageDispatcher;
     private TextView mouseSensitivityView;
@@ -64,19 +65,40 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         setContentView(R.layout.activity_main);
 
-        setButtonTouchListeners();
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
+         // If the adapter is null, then Bluetooth is not supported
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        initButtonTouchListeners();
+        initCamera();
+        initMouseSensitivityView();
+
+        getDevice();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mOpenCvCameraView != null) {
+            mOpenCvCameraView.disableView();
+        }
+    }
+
+    private void initMouseSensitivityView() {
+        this.mouseSensitivityView = (TextView) findViewById(R.id.sensitivity_indicator);
+        setMouseSensitivityText();
+    }
+
+    private void initCamera() {
         this.mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.open_cv_camera);
 
         this.mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         this.mOpenCvCameraView.setCvCameraViewListener(this);
-
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        this.mouseSensitivityView = (TextView) findViewById(R.id.sensitivity_indicator);
-        setMouseSensitivityText();
-
-        getDevice();
     }
 
     public synchronized boolean onKeyDown(int keyCode, KeyEvent event){
@@ -103,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.mouseSensitivityView.setText(String.format(unformatted, this.mouseSensitivity));
     }
 
-    private void setButtonTouchListeners() {
+    private void initButtonTouchListeners() {
         View leftButton = this.findViewById(R.id.left_click_button);
         final Vibrator vib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
 
@@ -250,7 +272,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         public void onManagerConnected(int status) {
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
-                    Log.i("MAIN_ACTIVITY", "OpenCV loaded successfully");
                     initializeFeaturesToTrack();
                     mOpenCvCameraView.enableFpsMeter();
                     mOpenCvCameraView.enableView();
