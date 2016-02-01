@@ -21,7 +21,6 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -36,7 +35,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, UserActivityObserver {
 
     static {
         System.loadLibrary("opencv_java3");
@@ -120,8 +119,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             MouseSensitivityMessage message = new MouseSensitivityMessage(this.mouseSensitivity);
             this.messageDispatcher.sendMouseSensitivityMessage(message);
             setMouseSensitivityText();
-            acknowledgeUserActivity();
+            onUserActivity();
         }
+
         return recognized || super.onKeyDown(keyCode, event);
     }
 
@@ -130,109 +130,37 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.mouseSensitivityView.setText(String.format(unformatted, this.mouseSensitivity));
     }
 
-    private synchronized void acknowledgeUserActivity() {
-        this.lastActive = new Date();
-    }
-
     private void initButtonTouchListeners() {
-        View leftButton = this.findViewById(R.id.left_click_button);
         final Vibrator vib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
 
-        leftButton.setOnTouchListener(new View.OnTouchListener() {
+        // Left Button
+        final View leftButton = this.findViewById(R.id.left_click_button);
 
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                boolean recognized = false;
-                MouseButtonAction action = null;
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        recognized = true;
-                        action = MouseButtonAction.LEFT_PRESS;
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        recognized = true;
-                        action = MouseButtonAction.LEFT_RELEASE;
-                        break;
-                }
-                if (recognized) {
-                    vib.vibrate(25);
-                    messageDispatcher.sendMouseButtonAction(action);
-                    acknowledgeUserActivity();
-                }
-                return recognized;
-            }
-        });
+        final MouseButtonPressListener leftButtonListener = new MouseButtonPressListener(
+                messageDispatcher, vib, MouseButtonAction.LEFT_PRESS,
+                MouseButtonAction.LEFT_RELEASE);
 
-        View rightButton = this.findViewById(R.id.right_click_button);
+        leftButtonListener.registerObserver(this);
+        leftButton.setOnTouchListener(leftButtonListener);
 
-        rightButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        vib.vibrate(25);
-                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.RIGHT_PRESS);
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        vib.vibrate(25);
-                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.RIGHT_RELEASE);
-                        return true;
-                }
-                return false;
-            }
-        });
+        // Right Button
+        final View rightButton = this.findViewById(R.id.right_click_button);
 
+        final MouseButtonPressListener rightListener = new MouseButtonPressListener(
+                messageDispatcher, vib, MouseButtonAction.RIGHT_PRESS,
+                MouseButtonAction.RIGHT_RELEASE);
+
+        rightListener.registerObserver(this);
+        rightButton.setOnTouchListener(rightListener);
+
+        // MouseWheel Button
         final View mouseWheelButton = this.findViewById(R.id.mouse_wheel_button);
 
-        mouseWheelButton.setOnTouchListener(new View.OnTouchListener() {
-            private double initialY;
-            private double prevY;
-            private final double THRESHOLD = 12.0;
-            private double offset;
+        final MouseButtonDragListener dragListener = new MouseButtonDragListener(
+                messageDispatcher, vib);
 
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                boolean recognized = false;
-
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        initialY = event.getY();
-                        prevY = 0.0;
-                        offset = event.getY();
-                        recognized = true;
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        double eventY = event.getY() - offset;
-
-                        if (Math.abs(eventY - initialY) > THRESHOLD) {
-                            MouseWheelDelta moueWheelDelta = null;
-
-                            if (eventY < prevY) {
-                                moueWheelDelta = MouseWheelDelta.MOUSE_WHEEL_UP;
-                            } else if (eventY > prevY) {
-                                moueWheelDelta = MouseWheelDelta.MOUSE_WHEEL_DOWN;
-                            }
-
-                            if (moueWheelDelta != null) {
-                                initialY = eventY;
-                                messageDispatcher.sendMouseWheelMessage(moueWheelDelta);
-                                vib.vibrate(5);
-                            }
-                            prevY = eventY;
-                        }
-                        recognized = true;
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        recognized = true;
-                }
-
-                if (recognized) {
-                    acknowledgeUserActivity();
-                }
-                return recognized;
-            }
-        });
-
+        dragListener.registerObserver(this);
+        mouseWheelButton.setOnTouchListener(dragListener);
     }
 
     private void getDevice() {
@@ -303,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        this.lastActive = new Date();
+        onUserActivity();
     }
 
     @Override
@@ -326,24 +254,30 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             greyMat.copyTo(mPrevFrame);
             keypointsFound.copyTo(mPrevKeypointsFound);
 
-            return greyMat; }
+            return greyMat;
+        }
 
         List<Point> prevKeypointList = mPrevKeypointsFound.toList();
         List<Point> keypointList = keypointsFound.toList();
 
-        if ((prevKeypointList.size() == 1) && (keypointList.size() == 1)) {
-            this.messageDispatcher.sendDisplacementMessage(calculateDisplacement(prevKeypointList.get(0), keypointList.get(0)));
-            acknowledgeUserActivity();
+        int prevSize = prevKeypointList.size();
+        int curSize = prevKeypointList.size();
 
-       } else if ((prevKeypointList.size()) > 1 &&
-                  (keypointList.size() > 1) /*&&*/
-                  /* (keypointList.size() == prevKeypointList.size()) */) {
+        if (prevSize >= 1 && curSize >= 1) {
+            Point a, b;
 
-            Collections.sort(prevKeypointList, this.comp);
-            Collections.sort(keypointList, this.comp);
+            if (prevSize > 1 & curSize > 1) {
+                Collections.sort(prevKeypointList, this.comp);
+                Collections.sort(keypointList, this.comp);
+            }
 
-            this.messageDispatcher.sendDisplacementMessage(calculateDisplacement(prevKeypointList.get(0), keypointList.get(0)));
-            acknowledgeUserActivity();
+            a = prevKeypointList.get(0);
+            b = keypointList.get(0);
+
+            DeltaPair deltaPair = calculateDisplacement(a, b);
+            this.messageDispatcher.sendDisplacementMessage(deltaPair);
+
+            onUserActivity();
         }
 
         Features2d.drawKeypoints(greyMat, PointUtils.convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
@@ -374,4 +308,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         return new DeltaPair(b.y - a.y, a.x - b.x);
     }
 
+    @Override
+    public synchronized void onUserActivity() {
+        this.lastActive = new Date();
+    }
 }
