@@ -275,18 +275,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         this.mFeatureDetector.detect(img, tmp);
 
-        convertToPoint(tmp).copyTo(keypoints);
-    }
-
-    private MatOfPoint2f convertToPoint(MatOfKeyPoint mat) {
-        KeyPoint[] arr = mat.toArray();
-        Point[] pointArr = new Point[arr.length];
-
-        for(int i = 0; i < arr.length; ++i) {
-            pointArr[i] = arr[i].pt;
-        }
-
-        return new MatOfPoint2f(pointArr);
+        PointUtils.convertToPoint(tmp).copyTo(keypoints);
     }
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -320,18 +309,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onCameraViewStopped() {
 
-    }
-
-    private MatOfKeyPoint convertToKeyPoint(MatOfPoint2f mat) {
-        Point[] arr = mat.toArray();
-        KeyPoint[] pointArr = new KeyPoint[arr.length];
-
-        for(int i = 0; i < arr.length; ++i) {
-            Point p = arr[i];
-            pointArr[i] = new KeyPoint((float)p.x, (float)p.y, 1.0f);
-        }
-
-        return new MatOfKeyPoint(pointArr);
     }
 
     @Override
@@ -369,7 +346,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             acknowledgeUserActivity();
         }
 
-        Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
+        Features2d.drawKeypoints(greyMat, PointUtils.convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
 
         greyMat.copyTo(mPrevFrame);
         keypointsFound.copyTo(mPrevKeypointsFound);
