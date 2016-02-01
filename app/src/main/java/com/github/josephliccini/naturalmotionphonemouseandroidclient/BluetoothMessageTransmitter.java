@@ -40,4 +40,13 @@ public class BluetoothMessageTransmitter {
             this.mOutputStream.write(bytes);
         } catch (IOException ex) { }
     }
+
+    public void cancel() {
+        try {
+            this.mSocket.close();
+        } catch (IOException ex) {
+
+        }
+
+    }
 }

@@ -6,3 +6,8 @@
 .DS_Store
 /build
 /captures
+.idea
+settings.gradle
+app/src/main/jniLibs/
+import-summary.txt
+openCVLibrary310/

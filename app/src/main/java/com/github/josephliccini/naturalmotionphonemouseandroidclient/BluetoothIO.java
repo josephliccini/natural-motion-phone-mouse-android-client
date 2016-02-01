@@ -47,4 +47,12 @@ public class BluetoothIO {
         this.mBluetoothTransmitter.sendMessage(message);
     }
 
+    public boolean isConnected() {
+        return this.mBluetoothTransmitter != null;
+    }
+
+    public void disconnect() {
+        this.mBluetoothTransmitter.cancel();
+    }
+
 }
