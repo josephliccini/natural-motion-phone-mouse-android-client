@@ -32,7 +32,9 @@ import org.opencv.features2d.Features2d;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -56,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private final ShortestYDistanceComparator comp = new ShortestYDistanceComparator();
     private MessageDispatcher messageDispatcher;
     private TextView mouseSensitivityView;
+
+    private Date lastActive;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             MouseSensitivityMessage message = new MouseSensitivityMessage(this.mouseSensitivity);
             this.messageDispatcher.sendMouseSensitivityMessage(message);
             setMouseSensitivityText();
+            acknowledgeUserActivity();
         }
         return recognized || super.onKeyDown(keyCode, event);
     }
@@ -125,24 +130,36 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.mouseSensitivityView.setText(String.format(unformatted, this.mouseSensitivity));
     }
 
+    private synchronized void acknowledgeUserActivity() {
+        this.lastActive = new Date();
+    }
+
     private void initButtonTouchListeners() {
         View leftButton = this.findViewById(R.id.left_click_button);
         final Vibrator vib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
 
         leftButton.setOnTouchListener(new View.OnTouchListener() {
+
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                boolean recognized = false;
+                MouseButtonAction action = null;
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        vib.vibrate(25);
-                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.LEFT_PRESS);
-                        return true;
+                        recognized = true;
+                        action = MouseButtonAction.LEFT_PRESS;
+                        break;
                     case MotionEvent.ACTION_UP:
-                        vib.vibrate(25);
-                        messageDispatcher.sendMouseButtonAction(MouseButtonAction.LEFT_RELEASE);
-                        return true;
+                        recognized = true;
+                        action = MouseButtonAction.LEFT_RELEASE;
+                        break;
                 }
-                return false;
+                if (recognized) {
+                    vib.vibrate(25);
+                    messageDispatcher.sendMouseButtonAction(action);
+                    acknowledgeUserActivity();
+                }
+                return recognized;
             }
         });
 
@@ -175,13 +192,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                boolean recognized = false;
+
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         initialY = event.getY();
                         prevY = 0.0;
                         offset = event.getY();
-                        return true;
-
+                        recognized = true;
+                        break;
                     case MotionEvent.ACTION_MOVE:
                         double eventY = event.getY() - offset;
 
@@ -201,12 +220,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                             }
                             prevY = eventY;
                         }
-                        return true;
-
+                        recognized = true;
+                        break;
                     case MotionEvent.ACTION_UP:
-                        return true;
+                        recognized = true;
                 }
-                return false;
+
+                if (recognized) {
+                    acknowledgeUserActivity();
+                }
+                return recognized;
             }
         });
 
@@ -291,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-
+        this.lastActive = new Date();
     }
 
     @Override
@@ -326,14 +349,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             greyMat.copyTo(mPrevFrame);
             keypointsFound.copyTo(mPrevKeypointsFound);
 
-            return greyMat;
-        }
+            return greyMat; }
 
         List<Point> prevKeypointList = mPrevKeypointsFound.toList();
         List<Point> keypointList = keypointsFound.toList();
 
         if ((prevKeypointList.size() == 1) && (keypointList.size() == 1)) {
             this.messageDispatcher.sendDisplacementMessage(calculateDisplacement(prevKeypointList.get(0), keypointList.get(0)));
+            acknowledgeUserActivity();
 
        } else if ((prevKeypointList.size()) > 1 &&
                   (keypointList.size() > 1) /*&&*/
@@ -343,6 +366,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Collections.sort(keypointList, this.comp);
 
             this.messageDispatcher.sendDisplacementMessage(calculateDisplacement(prevKeypointList.get(0), keypointList.get(0)));
+            acknowledgeUserActivity();
         }
 
         Features2d.drawKeypoints(greyMat, convertToKeyPoint(keypointsFound), greyMat, new Scalar(255, 0, 0), 3);
@@ -350,7 +374,21 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         greyMat.copyTo(mPrevFrame);
         keypointsFound.copyTo(mPrevKeypointsFound);
 
+        if (userNotActiveAfter(5)) {
+            try {
+                Thread.sleep(1500);
+            } catch (Exception ex) {}
+        }
+
         return greyMat;
+    }
+
+    private boolean userNotActiveAfter(int seconds) {
+        Date now = new Date();
+        long difference = now.getTime() - lastActive.getTime();
+        long secondsElapsed = TimeUnit.MILLISECONDS.toSeconds(difference);
+        Log.d("SecondsElapsed", "" + secondsElapsed);
+        return secondsElapsed > seconds;
     }
 
     private DeltaPair calculateDisplacement(Point a, Point b) {
