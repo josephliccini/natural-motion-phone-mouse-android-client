@@ -266,8 +266,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (prevSize >= 1 && curSize >= 1) {
             Point a, b;
 
-            if (prevSize > 1 & curSize > 1) {
+            if (prevSize > 1) {
                 Collections.sort(prevKeypointList, this.comp);
+            } else if (curSize > 1) {
                 Collections.sort(keypointList, this.comp);
             }
 
