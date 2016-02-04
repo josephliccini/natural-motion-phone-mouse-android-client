@@ -3,7 +3,10 @@ package com.github.josephliccini.naturalmotionphonemouseandroidclient;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -78,10 +81,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
         initButtonTouchListeners();
+        initSensorListeners();
         initCamera();
         initMouseSensitivityView();
 
         getDevice();
+    }
+
+    private void initSensorListeners() {
+        AccelerometerListener acelListener = new AccelerometerListener();
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        Sensor linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        sensorManager.registerListener(acelListener, linearAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        acelListener.registerObserver(this);
     }
 
     @Override

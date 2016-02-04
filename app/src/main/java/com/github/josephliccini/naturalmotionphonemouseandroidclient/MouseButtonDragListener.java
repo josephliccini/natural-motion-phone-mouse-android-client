@@ -7,7 +7,7 @@ import android.view.View;
 /**
  * Created by Joseph on 1/31/2016.
  */
-public class MouseButtonDragListener extends MouseButtonObservable implements View.OnTouchListener {
+public class MouseButtonDragListener extends UserActivityObservable implements View.OnTouchListener {
     private double initialY;
     private double prevY;
     private final double THRESHOLD = 12.0;

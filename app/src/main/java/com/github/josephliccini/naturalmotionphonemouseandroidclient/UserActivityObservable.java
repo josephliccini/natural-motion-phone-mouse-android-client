@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Created by Joseph on 1/31/2016.
  */
-public class MouseButtonObservable {
+public class UserActivityObservable {
     private final List<UserActivityObserver> observerList = new ArrayList<UserActivityObserver>();
 
     public final void notifyObservers() {

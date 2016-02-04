@@ -7,7 +7,7 @@ import android.view.View;
 /**
  * Created by Joseph on 1/31/2016.
  */
-public class MouseButtonPressListener extends MouseButtonObservable implements View.OnTouchListener {
+public class MouseButtonPressListener extends UserActivityObservable implements View.OnTouchListener {
     private MessageDispatcher messageDispatcher;
     private Vibrator vib;
     private MouseButtonAction messagePress;
