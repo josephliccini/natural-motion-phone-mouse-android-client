@@ -55,5 +55,13 @@
             android:layout_height="wrap_content"
             android:id="@+id/sensitivity_indicator" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_marginTop="30dp"
+            android:layout_height="0dp"
+            android:text="@string/disconnect_text"
+            android:layout_weight="3"
+            android:id="@+id/options_button" />
+
     </LinearLayout>
 </RelativeLayout>

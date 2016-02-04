@@ -9,7 +9,6 @@ import com.google.gson.Gson;
  * Created by Joseph on 1/27/2016.
  */
 public class MessageDispatcher {
-    private int shortMessageCount = 0;
     private BluetoothIO io;
     private Gson gson = new Gson();
 
@@ -36,5 +35,13 @@ public class MessageDispatcher {
 
     public void sendMouseSensitivityMessage(MouseSensitivityMessage message) {
         sendMessage(gson.toJson(message));
+    }
+
+    public synchronized boolean isConnected() {
+        return this.io.isConnected();
+    }
+
+    public void close() {
+        this.io.disconnect();
     }
 }

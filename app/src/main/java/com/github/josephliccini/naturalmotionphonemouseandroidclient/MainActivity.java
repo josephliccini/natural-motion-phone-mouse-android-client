@@ -80,10 +80,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             return;
         }
 
-        initButtonTouchListeners();
-        initSensorListeners();
         initCamera();
-        initMouseSensitivityView();
 
         getDevice();
     }
@@ -173,6 +170,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         dragListener.registerObserver(this);
         mouseWheelButton.setOnTouchListener(dragListener);
+
+        final View optionsButton = this.findViewById(R.id.options_button);
+
+        optionsButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (messageDispatcher.isConnected()) {
+                    messageDispatcher.close();
+                    mOpenCvCameraView.disableView();
+                    getDevice();
+                }
+                return true;
+            }
+        });
     }
 
     private void getDevice() {
@@ -192,6 +203,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
                 BluetoothIO io = new BluetoothIO(this, null);
                 this.messageDispatcher = new MessageDispatcher(io, device);
+
+                initMouseSensitivityView();
+                initButtonTouchListeners();
         }
     }
 
@@ -273,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         List<Point> keypointList = keypointsFound.toList();
 
         int prevSize = prevKeypointList.size();
-        int curSize = prevKeypointList.size();
+        int curSize = keypointList.size();
 
         if (prevSize >= 1 && curSize >= 1) {
             Point a, b;

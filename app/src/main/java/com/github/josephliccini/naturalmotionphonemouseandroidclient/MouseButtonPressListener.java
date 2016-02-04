@@ -30,8 +30,12 @@ public class MouseButtonPressListener extends UserActivityObservable implements 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 message = messagePress;
+                recognized = true;
+                break;
             case MotionEvent.ACTION_UP:
                 message = messageRelease;
+                recognized = true;
+                break;
         }
         if (recognized) {
             vib.vibrate(25);
