@@ -7,12 +7,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.os.Vibrator;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
@@ -34,9 +37,7 @@ import org.opencv.features2d.Features2d;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, UserActivityObserver {
 
@@ -56,12 +57,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private double mouseSensitivity = 1.5;
 
     private static final int REQUEST_CONNECT_DEVICE = 2;
+
     private FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
     private final ShortestYDistanceComparator comp = new ShortestYDistanceComparator();
     private MessageDispatcher messageDispatcher;
     private TextView mouseSensitivityView;
 
-    private Date lastActive;
+    private UserActivityManager userActivityManager;
+
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +83,26 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             finish();
             return;
         }
+
+        this.mHandler = new Handler(Looper.myLooper()) {
+            private final int TURN_OFF_CAMERA = 1;
+            private final int TURN_ON_CAMERA = 2;
+
+            @Override
+            public void handleMessage(Message message) {
+                switch(message.what) {
+                    case TURN_OFF_CAMERA:
+                        mOpenCvCameraView.disableView();
+                        break;
+                    case TURN_ON_CAMERA:
+                        mOpenCvCameraView.enableView();
+                        break;
+                    default:
+                        super.handleMessage(message);
+                }
+            }
+
+        };
 
         initCamera();
 
@@ -206,7 +230,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 initMouseSensitivityView();
                 initButtonTouchListeners();
+                initSensorListeners();
+                initUserActivityManager();
         }
+    }
+
+    private void initUserActivityManager() {
+        this.userActivityManager = new UserActivityManager(mHandler, this.mOpenCvCameraView);
     }
 
     private void initializeFeaturesToTrack() {
@@ -258,11 +288,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onCameraViewStarted(int width, int height) {
         onUserActivity();
+        TextView cameraStatusBar = (TextView) findViewById(R.id.camera_status_bar);
+        cameraStatusBar.setText(R.string.camera_on_text);
+        cameraStatusBar.setTextColor(ContextCompat.getColor(this, R.color.colorCameraOn));
     }
 
     @Override
     public void onCameraViewStopped() {
-
+        TextView cameraStatusBar = (TextView) findViewById(R.id.camera_status_bar);
+        cameraStatusBar.setText(R.string.camera_off_text);
+        cameraStatusBar.setTextColor(ContextCompat.getColor(this, R.color.colorCameraOff));
     }
 
     @Override
@@ -312,21 +347,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         greyMat.copyTo(mPrevFrame);
         keypointsFound.copyTo(mPrevKeypointsFound);
 
-        if (userNotActiveAfter(5)) {
-            try {
-                Thread.sleep(1500);
-            } catch (Exception ex) {}
-        }
-
         return greyMat;
-    }
-
-    private boolean userNotActiveAfter(int seconds) {
-        Date now = new Date();
-        long difference = now.getTime() - lastActive.getTime();
-        long secondsElapsed = TimeUnit.MILLISECONDS.toSeconds(difference);
-        Log.d("SecondsElapsed", "" + secondsElapsed);
-        return secondsElapsed > seconds;
     }
 
     private DeltaPair calculateDisplacement(Point a, Point b) {
@@ -337,6 +358,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public synchronized void onUserActivity() {
-        this.lastActive = new Date();
+        this.userActivityManager.onUserActivity();
     }
 }

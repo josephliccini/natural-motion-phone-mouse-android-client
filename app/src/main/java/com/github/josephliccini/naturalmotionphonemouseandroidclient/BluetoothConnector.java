@@ -15,6 +15,8 @@ public class BluetoothConnector implements Runnable {
 
     private boolean mIsConnected = false;
 
+    private BluetoothIO io;
+
     public BluetoothConnector(BluetoothDevice device) {
         this.mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -43,16 +45,13 @@ public class BluetoothConnector implements Runnable {
 
         try {
             this.mSocket.connect();
+            io.setBluetoothTransmitter(new BluetoothMessageTransmitter(this.mSocket));
         } catch (IOException ex) {
             this.mSocket.close();
         }
     }
 
-    public BluetoothSocket getSocket() throws Exception {
-        if (this.mIsConnected) {
-            return this.mSocket;
-        }
-        throw new Exception("Not Initialized Socket");
+    public void registerTransmitterCallback(BluetoothIO bluetoothIO) {
+        this.io = bluetoothIO;
     }
-
 }

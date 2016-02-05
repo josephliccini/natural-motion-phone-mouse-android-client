@@ -26,24 +26,12 @@ public class BluetoothIO {
 
     public void connect(BluetoothDevice device) {
         this.mBluetoothConnector = new BluetoothConnector(device);
-
+        this.mBluetoothConnector.registerTransmitterCallback(this);
         Thread connectionThread = new Thread(this.mBluetoothConnector);
         connectionThread.start();
     }
 
     public synchronized void sendMessage(String message) {
-        BluetoothSocket tmpSocket = null;
-        try {
-            tmpSocket = this.mBluetoothConnector.getSocket();
-        } catch (Exception ex) {
-            Log.d("BLuetoothIO", "Socket is not connected");
-            return;
-        }
-
-        if (this.mBluetoothTransmitter == null) {
-            this.mBluetoothTransmitter = new BluetoothMessageTransmitter(tmpSocket);
-        }
-
         this.mBluetoothTransmitter.sendMessage(message);
     }
 
@@ -53,6 +41,10 @@ public class BluetoothIO {
 
     public void disconnect() {
         this.mBluetoothTransmitter.cancel();
+    }
+
+    public void setBluetoothTransmitter(BluetoothMessageTransmitter transmitter) {
+        this.mBluetoothTransmitter = transmitter;
     }
 
 }

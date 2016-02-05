@@ -43,10 +43,18 @@
                 android:id="@+id/right_click_button" />
         </LinearLayout>
 
+        <TextView
+            android:layout_marginTop="30dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/camera_status_bar"
+            android:text="@string/camera_off_text"
+            android:textColor="#FF0000"
+            android:gravity="center"/>
+
         <org.opencv.android.JavaCameraView
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:layout_marginTop="50dp"
             android:id="@+id/open_cv_camera" />
 
         <TextView

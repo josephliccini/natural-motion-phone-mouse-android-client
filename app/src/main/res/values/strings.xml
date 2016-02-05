@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Natural Motion Phone Mouse Android Client</string>
+    <string name="app_name">Natural Motion Phone Mouse</string>
     <string name="button_scan">Scan for devices</string>
     <string name="none_found">No devices found</string>
     <string name="none_paired">No devices have been paired</string>
@@ -12,4 +12,6 @@
     <string name="wheel_button_text">Wheel</string>
     <string name="sensitivity_indicator_text">Sensitivity: %.2f</string>
     <string name="disconnect_text">Hold to Disconnect</string>
+    <string name="camera_off_text">CAMERA OFF</string>
+    <string name="camera_on_text">CAMERA ON</string>
 </resources>
