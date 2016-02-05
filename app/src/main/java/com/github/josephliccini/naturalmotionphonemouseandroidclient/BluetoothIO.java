@@ -32,6 +32,11 @@ public class BluetoothIO {
     }
 
     public synchronized void sendMessage(String message) {
+        if (this.mBluetoothTransmitter == null) {
+            Log.d("BTIO", "Not Connected Yet!");
+            return;
+        }
+
         this.mBluetoothTransmitter.sendMessage(message);
     }
 

@@ -3,6 +3,7 @@ package com.github.josephliccini.naturalmotionphonemouseandroidclient;
 import android.content.Context;
 import android.graphics.Camera;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import org.opencv.android.CameraBridgeViewBase;
@@ -14,21 +15,22 @@ import java.util.concurrent.TimeUnit;
  * Created by Joseph on 2/4/2016.
  */
 public class UserActivityManager implements Runnable {
-    private final double USER_ACITIVITY_FREEZE_THRESHOLD = 4.0;
+    private final double USER_ACITIVITY_FREEZE_THRESHOLD = 1.5;
 
     private Date lastActive = new Date();
-    private CameraBridgeViewBase cameraView;
     private Handler handler;
+    private boolean viewDisabled = false;
 
-    public UserActivityManager(Handler handler, CameraBridgeViewBase cameraView) {
+    public UserActivityManager(Handler handler) {
         this.handler = handler;
-        this.cameraView = cameraView;
     }
 
     public synchronized void onUserActivity() {
         this.lastActive = new Date();
-        if (!this.cameraView.isEnabled()) {
-            this.cameraView.enableView();
+        if (viewDisabled) {
+            Message msg = Message.obtain(handler, 2); // 1 = Turn Off Camera
+            msg.sendToTarget();
+            viewDisabled = false;
         }
     }
 
@@ -47,8 +49,10 @@ public class UserActivityManager implements Runnable {
                 Thread.sleep(250);
             } catch (InterruptedException ex) { }
             if (userNotActiveAfter(USER_ACITIVITY_FREEZE_THRESHOLD) &&
-                    this.cameraView.isEnabled()) {
-                // Use Handler to Freeze UI
+                !viewDisabled) {
+                Message msg = Message.obtain(handler, 1); // 1 = Turn Off Camera
+                msg.sendToTarget();
+                viewDisabled = true;
             }
         }
     }

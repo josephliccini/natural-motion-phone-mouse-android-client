@@ -200,11 +200,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         optionsButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (messageDispatcher.isConnected()) {
+                try {
                     messageDispatcher.close();
-                    mOpenCvCameraView.disableView();
-                    getDevice();
-                }
+                } catch(Exception ex) {}
+
+                mOpenCvCameraView.disableView();
+                getDevice();
                 return true;
             }
         });
@@ -236,7 +237,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     private void initUserActivityManager() {
-        this.userActivityManager = new UserActivityManager(mHandler, this.mOpenCvCameraView);
+        this.userActivityManager = new UserActivityManager(mHandler);
+        new Thread(userActivityManager).start();
     }
 
     private void initializeFeaturesToTrack() {
