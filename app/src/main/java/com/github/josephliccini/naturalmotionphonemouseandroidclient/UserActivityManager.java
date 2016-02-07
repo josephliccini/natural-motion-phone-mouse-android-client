@@ -27,8 +27,10 @@ public class UserActivityManager implements Runnable {
 
     public synchronized void onUserActivity() {
         this.lastActive = new Date();
+        Log.d("ShouldEnable", "" + viewDisabled);
         if (viewDisabled) {
-            Message msg = Message.obtain(handler, 2); // 1 = Turn Off Camera
+            Log.d("Enabling", "" + viewDisabled);
+            Message msg = Message.obtain(handler, 2); // 2 = Turn On Camera
             msg.sendToTarget();
             viewDisabled = false;
         }
@@ -44,16 +46,22 @@ public class UserActivityManager implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
-            try {
+        try {
+            while (true) {
                 Thread.sleep(250);
-            } catch (InterruptedException ex) { }
-            if (userNotActiveAfter(USER_ACITIVITY_FREEZE_THRESHOLD) &&
-                !viewDisabled) {
-                Message msg = Message.obtain(handler, 1); // 1 = Turn Off Camera
-                msg.sendToTarget();
-                viewDisabled = true;
+                if (userNotActiveAfter(USER_ACITIVITY_FREEZE_THRESHOLD) &&
+                    !viewDisabled) {
+                    Log.d("Disabling", "" + viewDisabled);
+                    Message msg = Message.obtain(handler, 1); // 1 = Turn Off Camera
+                    msg.sendToTarget();
+                    synchronized (this) {
+                        viewDisabled = true;
+                    }
+                }
             }
+        } catch (InterruptedException ex) {
+            Log.d("UAMInterrupt", "UAM");
+            return;
         }
     }
 }

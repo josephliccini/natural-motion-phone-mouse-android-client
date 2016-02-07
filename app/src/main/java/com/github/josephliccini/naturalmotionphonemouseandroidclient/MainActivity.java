@@ -65,7 +65,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private UserActivityManager userActivityManager;
 
+    private Thread userActivityMonitorThread;
+
     private Handler mHandler;
+
+    AccelerometerListener acelListener;
+    SensorManager sensorManager;
+    Sensor linearAccelerometer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,15 +110,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         };
 
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+
         initCamera();
 
         getDevice();
     }
 
     private void initSensorListeners() {
-        AccelerometerListener acelListener = new AccelerometerListener();
-        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        Sensor linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        acelListener = new AccelerometerListener();
         sensorManager.registerListener(acelListener, linearAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         acelListener.registerObserver(this);
     }
@@ -123,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (mOpenCvCameraView != null) {
             mOpenCvCameraView.disableView();
         }
+        sensorManager.unregisterListener(acelListener);
     }
 
     private void initMouseSensitivityView() {
@@ -204,6 +212,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     messageDispatcher.close();
                 } catch(Exception ex) {}
 
+                sensorManager.unregisterListener(acelListener);
+                userActivityMonitorThread.interrupt();
                 mOpenCvCameraView.disableView();
                 getDevice();
                 return true;
@@ -238,7 +248,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private void initUserActivityManager() {
         this.userActivityManager = new UserActivityManager(mHandler);
-        new Thread(userActivityManager).start();
+        userActivityMonitorThread =new Thread(userActivityManager);
+        userActivityMonitorThread.start();
     }
 
     private void initializeFeaturesToTrack() {
@@ -284,12 +295,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onResume() {
         super.onResume();
+        if (acelListener != null) {
+            sensorManager.registerListener(acelListener, linearAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        }
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
     }
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        onUserActivity();
         TextView cameraStatusBar = (TextView) findViewById(R.id.camera_status_bar);
         cameraStatusBar.setText(R.string.camera_on_text);
         cameraStatusBar.setTextColor(ContextCompat.getColor(this, R.color.colorCameraOn));
