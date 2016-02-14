@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private double mouseSensitivity = 1.5;
 
+    private static final int OPEN_SETTINGS = 1;
     private static final int REQUEST_CONNECT_DEVICE = 2;
 
     private FeatureDetector mFeatureDetector = FeatureDetector.create(FeatureDetector.PYRAMID_SIMPLEBLOB);
@@ -203,9 +204,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         dragListener.registerObserver(this);
         mouseWheelButton.setOnTouchListener(dragListener);
 
-        final View optionsButton = this.findViewById(R.id.options_button);
+        final View disconnectButton = this.findViewById(R.id.disconnect_button);
 
-        optionsButton.setOnLongClickListener(new View.OnLongClickListener() {
+        disconnectButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 try {
@@ -216,6 +217,17 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 userActivityMonitorThread.interrupt();
                 mOpenCvCameraView.disableView();
                 getDevice();
+                return true;
+            }
+        });
+
+        final View settingsButton = this.findViewById(R.id.options_button);
+
+        settingsButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Intent settingsIntent = new Intent(MainActivity.this, SettingsActivity.class);
+                MainActivity.this.startActivityForResult(settingsIntent, OPEN_SETTINGS);
                 return true;
             }
         });
