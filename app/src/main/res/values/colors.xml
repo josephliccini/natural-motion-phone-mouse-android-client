@@ -5,4 +5,5 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorCameraOff">#FF0000</color>
     <color name="colorCameraOn">#008000</color>
+    <color name="infoColor">#444444</color>
 </resources>

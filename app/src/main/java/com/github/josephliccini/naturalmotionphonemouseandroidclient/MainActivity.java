@@ -5,12 +5,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -45,16 +47,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         System.loadLibrary("opencv_java3");
     }
 
+    private boolean firstLaunch = true;
+
     private BluetoothAdapter mBluetoothAdapter;
 
     private CameraBridgeViewBase mOpenCvCameraView;
+    private MouseButtonDragListener dragListener;
 
     private Mat mPrevFrame;
 
     private MatOfPoint2f mFeaturesToTrack;
     private MatOfPoint2f mPrevKeypointsFound;
 
-    private double mouseSensitivity = 1.5;
+    private double mouseSensitivity = 0.0;
 
     private static final int OPEN_SETTINGS = 1;
     private static final int REQUEST_CONNECT_DEVICE = 2;
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Thread userActivityMonitorThread;
 
     private Handler mHandler;
+    private SharedPreferences.OnSharedPreferenceChangeListener mSharedPrefListener;
 
     AccelerometerListener acelListener;
     SensorManager sensorManager;
@@ -153,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             this.mouseSensitivity += 0.25;
             recognized = true;
         } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
-            this.mouseSensitivity -= 0.25;
+            this.mouseSensitivity = Math.max(this.mouseSensitivity - 0.25, 0.0);
             recognized = true;
         }
 
@@ -169,7 +175,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private void setMouseSensitivityText() {
         String unformatted = getResources().getString(R.string.sensitivity_indicator_text);
-        this.mouseSensitivityView.setText(String.format(unformatted, this.mouseSensitivity));
+        if (this.mouseSensitivityView != null) {
+            this.mouseSensitivityView.setText(String.format(unformatted, this.mouseSensitivity));
+        }
     }
 
     private void initButtonTouchListeners() {
@@ -198,8 +206,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // MouseWheel Button
         final View mouseWheelButton = this.findViewById(R.id.mouse_wheel_button);
 
-        final MouseButtonDragListener dragListener = new MouseButtonDragListener(
-                messageDispatcher, vib);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        double mouseWheelThreshold = Double.parseDouble(prefs.getString("default_wheel_sensitivity", "10"));
+
+        dragListener = new MouseButtonDragListener(
+                messageDispatcher, vib, mouseWheelThreshold);
 
         dragListener.registerObserver(this);
         mouseWheelButton.setOnTouchListener(dragListener);
@@ -310,6 +323,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (acelListener != null) {
             sensorManager.registerListener(acelListener, linearAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (dragListener != null) {
+            double thresholdValue = Double.parseDouble(prefs.getString("default_wheel_sensitivity", "10"));
+            this.dragListener.setThreshold(thresholdValue);
+        }
+
+        if (firstLaunch) {
+            this.mouseSensitivity = Double.parseDouble(prefs.getString("default_sensitivity", "2.0"));
+            firstLaunch = false;
+        }
+
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
     }
 

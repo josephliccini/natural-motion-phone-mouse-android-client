@@ -63,21 +63,29 @@
             android:layout_height="wrap_content"
             android:id="@+id/sensitivity_indicator" />
 
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:textSize="12dp"
+            android:textStyle="italic"
+            android:textColor="@color/infoColor"
+            android:text="@string/hold_text"/>
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@drawable/back">
 
             <Button
                 android:layout_width="fill_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="30dp"
                 android:text="@string/disconnect_button_text"
                 android:layout_weight="1"
                 android:id="@+id/disconnect_button" />
             <Button
                 android:layout_width="fill_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="30dp"
                 android:text="@string/settings_button_text"
                 android:layout_weight="1"
                 android:id="@+id/options_button" />

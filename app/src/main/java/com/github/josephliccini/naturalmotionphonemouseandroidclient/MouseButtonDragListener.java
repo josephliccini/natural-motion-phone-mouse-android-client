@@ -10,14 +10,15 @@ import android.view.View;
 public class MouseButtonDragListener extends UserActivityObservable implements View.OnTouchListener {
     private double initialY;
     private double prevY;
-    private final double THRESHOLD = 12.0;
+    private double threshold;
     private double offset;
     private final Vibrator vib;
     private final MessageDispatcher messageDispatcher;
 
-    public MouseButtonDragListener(MessageDispatcher messageDispatcher, Vibrator vib) {
+    public MouseButtonDragListener(MessageDispatcher messageDispatcher, Vibrator vib, double threshold) {
         this.messageDispatcher = messageDispatcher;
         this.vib = vib;
+        this.threshold = threshold;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class MouseButtonDragListener extends UserActivityObservable implements V
             case MotionEvent.ACTION_MOVE:
                 double eventY = event.getY() - offset;
 
-                if (Math.abs(eventY - initialY) > THRESHOLD) {
+                if (Math.abs(eventY - initialY) > threshold) {
                     MouseWheelDelta moueWheelDelta = null;
 
                     if (eventY < prevY) {
@@ -62,5 +63,9 @@ public class MouseButtonDragListener extends UserActivityObservable implements V
         }
 
         return recognized;
+    }
+
+    public void setThreshold(double threshold) {
+        this.threshold = threshold;
     }
 }
