@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, UserActivityObserver {
+public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, UserActivityObserver, Handler.Callback {
 
     static {
         System.loadLibrary("opencv_java3");
@@ -97,25 +97,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             return;
         }
 
-        this.mHandler = new Handler(Looper.myLooper()) {
-            private final int TURN_OFF_CAMERA = 1;
-            private final int TURN_ON_CAMERA = 2;
-
-            @Override
-            public void handleMessage(Message message) {
-                switch(message.what) {
-                    case TURN_OFF_CAMERA:
-                        mOpenCvCameraView.disableView();
-                        break;
-                    case TURN_ON_CAMERA:
-                        mOpenCvCameraView.enableView();
-                        break;
-                    default:
-                        super.handleMessage(message);
-                }
-            }
-
-        };
+        this.mHandler = new Handler(this);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
@@ -412,5 +394,21 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public synchronized void onUserActivity() {
         this.userActivityManager.onUserActivity();
+    }
+
+    @Override
+    public boolean handleMessage(Message msg) {
+        final int TURN_OFF_CAMERA = 1;
+        final int TURN_ON_CAMERA = 2;
+
+        switch(msg.what) {
+            case TURN_OFF_CAMERA:
+                mOpenCvCameraView.disableView();
+                return true;
+            case TURN_ON_CAMERA:
+                mOpenCvCameraView.enableView();
+                return true;
+        }
+        return false;
     }
 }

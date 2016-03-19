@@ -29,6 +29,6 @@
 
     <string name="pref_title_default_sensitivity">Default Sensitivity</string>
 
-    <string name="pref_title_default_wheel_sensitivity">Default Wheel Sensitivity</string>
+    <string name="pref_title_default_wheel_sensitivity">Wheel Sensitivity</string>
 
 </resources>

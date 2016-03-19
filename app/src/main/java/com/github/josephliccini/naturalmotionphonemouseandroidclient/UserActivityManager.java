@@ -48,7 +48,7 @@ public class UserActivityManager implements Runnable {
     public void run() {
         try {
             while (true) {
-                Thread.sleep(250);
+                Thread.sleep(100);
                 if (userNotActiveAfter(USER_ACITIVITY_FREEZE_THRESHOLD) &&
                     !viewDisabled) {
                     Log.d("Disabling", "" + viewDisabled);
