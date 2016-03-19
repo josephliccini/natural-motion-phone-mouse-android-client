@@ -19,6 +19,7 @@ public class BluetoothIO {
 
     private BluetoothConnector mBluetoothConnector;
     private BluetoothMessageTransmitter mBluetoothTransmitter;
+    private Thread receiveMessageThread;
 
     public BluetoothIO(Context context, Handler handler) {
         this.mHandler = handler;
@@ -45,11 +46,30 @@ public class BluetoothIO {
     }
 
     public void disconnect() {
+        if (this.receiveMessageThread != null) {
+            this.receiveMessageThread.interrupt();
+            this.receiveMessageThread = null;
+        }
         this.mBluetoothTransmitter.cancel();
     }
 
     public void setBluetoothTransmitter(BluetoothMessageTransmitter transmitter) {
         this.mBluetoothTransmitter = transmitter;
+        if (this.receiveMessageThread != null) {
+            receiveMessageThread.interrupt();
+        }
+        receiveMessageThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    mBluetoothTransmitter.readMessage();
+                }
+            }
+        });
+        receiveMessageThread.start();
     }
 
+    public Handler getHandler() {
+        return mHandler;
+    }
 }

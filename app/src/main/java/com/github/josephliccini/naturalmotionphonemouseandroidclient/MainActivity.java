@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
@@ -251,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-                BluetoothIO io = new BluetoothIO(this, null);
+                BluetoothIO io = new BluetoothIO(this, mHandler);
                 this.messageDispatcher = new MessageDispatcher(io, device);
 
                 initMouseSensitivityView();
@@ -410,6 +409,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public boolean handleMessage(Message msg) {
         final int TURN_OFF_CAMERA = 1;
         final int TURN_ON_CAMERA = 2;
+        final int BEGIN_BLUETOOTH = 3;
 
         switch(msg.what) {
             case TURN_OFF_CAMERA:
@@ -417,6 +417,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 return true;
             case TURN_ON_CAMERA:
                 mOpenCvCameraView.enableView();
+                return true;
+            case BEGIN_BLUETOOTH:
+                this.messageDispatcher.enableConnections();
+
+                String defaultSensitivity = PreferenceManager.getDefaultSharedPreferences(this).getString("default_sensitivity", "2.0");
+
+                this.messageDispatcher.sendMouseSensitivityMessage(new MouseSensitivityMessage(Double.parseDouble(defaultSensitivity)));
+
                 return true;
         }
         return false;

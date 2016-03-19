@@ -45,7 +45,7 @@ public class BluetoothConnector implements Runnable {
 
         try {
             this.mSocket.connect();
-            io.setBluetoothTransmitter(new BluetoothMessageTransmitter(this.mSocket));
+            io.setBluetoothTransmitter(new BluetoothMessageTransmitter(this.mSocket, io.getHandler()));
         } catch (IOException ex) {
             this.mSocket.close();
         }

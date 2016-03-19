@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 public class MessageDispatcher {
     private BluetoothIO io;
     private Gson gson = new Gson();
+    private boolean connectionsEnabled = false;
 
     public MessageDispatcher(BluetoothIO io, BluetoothDevice device) {
         this.io = io;
@@ -18,6 +19,10 @@ public class MessageDispatcher {
     }
 
     private void sendMessage(String json) {
+        if (!connectionsEnabled) {
+            return;
+        }
+
         this.io.sendMessage(json);
     }
 
@@ -38,10 +43,15 @@ public class MessageDispatcher {
     }
 
     public synchronized boolean isConnected() {
-        return this.io.isConnected();
+        return this.io.isConnected() && connectionsEnabled;
+    }
+
+    public void enableConnections() {
+        this.connectionsEnabled = true;
     }
 
     public void close() {
+        this.connectionsEnabled = false;
         this.io.disconnect();
     }
 }
