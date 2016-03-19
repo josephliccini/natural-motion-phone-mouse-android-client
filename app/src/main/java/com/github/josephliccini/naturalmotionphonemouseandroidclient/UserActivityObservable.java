@@ -19,7 +19,7 @@ public class UserActivityObservable {
         observerList.add(o);
     }
 
-    public final void deleterObserver(UserActivityObserver o) {
+    public final void deleteObserver(UserActivityObserver o) {
         int index = observerList.indexOf(o);
         observerList.remove(index);
     }

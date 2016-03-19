@@ -173,7 +173,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 MouseButtonAction.LEFT_RELEASE);
 
         leftButtonListener.registerObserver(this);
-        leftButton.setOnTouchListener(leftButtonListener);
 
         // Right Button
         final View rightButton = this.findViewById(R.id.right_click_button);
@@ -183,13 +182,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 MouseButtonAction.RIGHT_RELEASE);
 
         rightListener.registerObserver(this);
-        rightButton.setOnTouchListener(rightListener);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        boolean reversedLayout = prefs.getBoolean("left_right_swap", false);
+
+        if (reversedLayout) {
+            rightButton.setOnTouchListener(leftButtonListener);
+            leftButton.setOnTouchListener(rightListener);
+        } else {
+            leftButton.setOnTouchListener(leftButtonListener);
+            rightButton.setOnTouchListener(rightListener);
+        }
 
         // MouseWheel Button
         final View mouseWheelButton = this.findViewById(R.id.mouse_wheel_button);
 
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         double mouseWheelThreshold = Double.parseDouble(prefs.getString("default_wheel_sensitivity", "10"));
 
@@ -316,6 +324,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (firstLaunch) {
             this.mouseSensitivity = Double.parseDouble(prefs.getString("default_sensitivity", "2.0"));
             firstLaunch = false;
+        } else {
+            initButtonTouchListeners();
         }
 
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
