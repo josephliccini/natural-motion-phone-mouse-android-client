@@ -61,9 +61,7 @@ public class BluetoothIO {
         receiveMessageThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true) {
-                    mBluetoothTransmitter.readMessage();
-                }
+                mBluetoothTransmitter.listenForMessages();
             }
         });
         receiveMessageThread.start();

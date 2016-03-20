@@ -40,7 +40,7 @@ public class BluetoothMessageTransmitter {
         writeOut(bytes);
     }
 
-    public void readMessage() {
+    public void listenForMessages() {
         byte[] buffer = new byte[1024];
         int begin = 0;
         int bytes = 0;
