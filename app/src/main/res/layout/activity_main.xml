@@ -8,6 +8,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
+    android:background="@drawable/main_screen_gradient"
     tools:context="com.github.josephliccini.naturalmotionphonemouseandroidclient.MainActivity">
 
     <LinearLayout
@@ -33,8 +34,9 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:src="@drawable/mouse"
-                android:backgroundTint="@color/holdToActivateColor"
-                android:id="@+id/mouse_wheel_button" />
+                android:background="@drawable/alpha"
+                android:id="@+id/mouse_wheel_button"
+                android:contentDescription="@string/wheel_button_text" />
 
             <Button
                 android:layout_width="wrap_content"

@@ -6,5 +6,6 @@
     <color name="colorCameraOff">#FF0000</color>
     <color name="colorCameraOn">#008000</color>
     <color name="infoColor">#cccccc</color>
+    <color name="almostBlack">#222222</color>
     <color name="holdToActivateColor">#111111</color>
 </resources>

@@ -8,6 +8,7 @@ public class MouseButtonAction extends MouseMessage {
     public static final MouseButtonAction RIGHT_PRESS = new MouseButtonAction("MouseButtonAction", "Right_Press");
     public static final MouseButtonAction LEFT_RELEASE = new MouseButtonAction("MouseButtonAction", "Left_Release");
     public static final MouseButtonAction RIGHT_RELEASE = new MouseButtonAction("MouseButtonAction", "Right_Release");
+    public static final MouseButtonAction MIDDLE_PRESS = new MouseButtonAction("MouseButtonAction", "Middle_Press");
 
     private final String mouseActionType;
 
