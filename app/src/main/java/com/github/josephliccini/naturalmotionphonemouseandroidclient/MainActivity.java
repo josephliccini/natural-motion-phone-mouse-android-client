@@ -46,8 +46,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         System.loadLibrary("opencv_java3");
     }
 
-    private boolean firstLaunch = true;
-
     private BluetoothAdapter mBluetoothAdapter;
 
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -164,7 +162,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (recognized) {
             vib.vibrate(5);
             this.messageDispatcher.sendMouseButtonAction(message);
-            Log.d("MESSAGE_X_UP", message.toString());
             onUserActivity();
         }
 
@@ -359,12 +356,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             this.dragListener.setThreshold(thresholdValue);
         }
 
-        if (firstLaunch) {
-            this.mouseSensitivity = Double.parseDouble(prefs.getString("default_sensitivity", "2.0"));
-            firstLaunch = false;
-        } else {
-            initButtonTouchListeners();
-        }
+        this.mouseSensitivity = Double.parseDouble(prefs.getString("default_sensitivity", "2.0"));
+        initButtonTouchListeners();
 
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);
     }
