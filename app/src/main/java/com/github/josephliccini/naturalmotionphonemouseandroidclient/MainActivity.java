@@ -75,9 +75,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Handler mHandler;
     private SharedPreferences.OnSharedPreferenceChangeListener mSharedPrefListener;
 
-    AccelerometerListener acelListener;
-    SensorManager sensorManager;
-    Sensor linearAccelerometer;
+    private boolean xButton1Down = false;
+    private boolean xButton2Down = false;
+
+    private AccelerometerListener acelListener;
+    private SensorManager sensorManager;
+    private Sensor linearAccelerometer;
+
+    private Vibrator vib;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
         this.mHandler = new Handler(this);
+        this.vib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
@@ -133,21 +139,56 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         this.mOpenCvCameraView.setCvCameraViewListener(this);
     }
 
+    @Override
     public synchronized boolean onKeyDown(int keyCode, KeyEvent event){
 
         boolean recognized = false;
+        MouseButtonAction message = null;
+
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP){
-            this.mouseSensitivity += 0.25;
+            message = MouseButtonAction.XBUTTON1_PRESS;
+            if (xButton1Down) {
+                return true;
+            }
+            xButton1Down = true;
             recognized = true;
         } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
-            this.mouseSensitivity = Math.max(this.mouseSensitivity - 0.25, 0.0);
+            message = MouseButtonAction.XBUTTON2_PRESS;
+            if (xButton2Down) {
+                return true;
+            }
+            xButton2Down = true;
             recognized = true;
         }
 
         if (recognized) {
-            MouseSensitivityMessage message = new MouseSensitivityMessage(this.mouseSensitivity);
-            this.messageDispatcher.sendMouseSensitivityMessage(message);
-            setMouseSensitivityText();
+            vib.vibrate(5);
+            this.messageDispatcher.sendMouseButtonAction(message);
+            Log.d("MESSAGE_X_UP", message.toString());
+            onUserActivity();
+        }
+
+        return recognized || super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public synchronized boolean onKeyUp(int keyCode, KeyEvent event) {
+        boolean recognized = false;
+        MouseButtonAction message = null;
+
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP){
+            message = MouseButtonAction.XBUTTON1_RELEASE;
+            xButton1Down = false;
+            recognized = true;
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
+            message = MouseButtonAction.XBUTTON2_RELEASE;
+            xButton2Down = false;
+            recognized = true;
+        }
+
+        if (recognized) {
+            this.messageDispatcher.sendMouseButtonAction(message);
+            Log.d("MESSAGE_X_UP", message.toString());
             onUserActivity();
         }
 
@@ -162,8 +203,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     private void initButtonTouchListeners() {
-        final Vibrator vib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
-
         // Left Button
         final View leftButton = this.findViewById(R.id.left_click_button);
 
