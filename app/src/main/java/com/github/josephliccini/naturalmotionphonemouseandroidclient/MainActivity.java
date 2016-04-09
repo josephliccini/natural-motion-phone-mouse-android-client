@@ -144,18 +144,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         MouseButtonAction message = null;
 
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP){
-            message = MouseButtonAction.XBUTTON1_PRESS;
-            if (xButton1Down) {
-                return true;
-            }
-            xButton1Down = true;
-            recognized = true;
-        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
             message = MouseButtonAction.XBUTTON2_PRESS;
             if (xButton2Down) {
                 return true;
             }
             xButton2Down = true;
+            recognized = true;
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
+            message = MouseButtonAction.XBUTTON1_PRESS;
+            if (xButton1Down) {
+                return true;
+            }
+            xButton1Down = true;
             recognized = true;
         }
 
