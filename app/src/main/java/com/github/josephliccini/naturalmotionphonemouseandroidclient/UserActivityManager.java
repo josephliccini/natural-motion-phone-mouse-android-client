@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
  * Created by Joseph on 2/4/2016.
  */
 public class UserActivityManager implements Runnable {
+    public final int TURN_OFF_CAMERA = 1;
+    public final int TURN_ON_CAMERA = 2;
     private final double USER_ACITIVITY_FREEZE_THRESHOLD = 1.5;
 
     private Date lastActive = new Date();
@@ -30,7 +32,7 @@ public class UserActivityManager implements Runnable {
         Log.d("ShouldEnable", "" + viewDisabled);
         if (viewDisabled) {
             Log.d("Enabling", "" + viewDisabled);
-            Message msg = Message.obtain(handler, 2); // 2 = Turn On Camera
+            Message msg = Message.obtain(handler, TURN_ON_CAMERA);
             msg.sendToTarget();
             viewDisabled = false;
         }
@@ -49,10 +51,9 @@ public class UserActivityManager implements Runnable {
         try {
             while (true) {
                 Thread.sleep(100);
-                if (userNotActiveAfter(USER_ACITIVITY_FREEZE_THRESHOLD) &&
-                    !viewDisabled) {
+                if (!viewDisabled && userNotActiveAfter(USER_ACITIVITY_FREEZE_THRESHOLD)) {
                     Log.d("Disabling", "" + viewDisabled);
-                    Message msg = Message.obtain(handler, 1); // 1 = Turn Off Camera
+                    Message msg = Message.obtain(handler, TURN_OFF_CAMERA);
                     msg.sendToTarget();
                     synchronized (this) {
                         viewDisabled = true;

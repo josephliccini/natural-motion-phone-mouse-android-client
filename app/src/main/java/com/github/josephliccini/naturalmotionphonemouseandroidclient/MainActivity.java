@@ -33,8 +33,10 @@ import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -233,7 +235,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // MouseWheel Button
         final View mouseWheelButton = this.findViewById(R.id.mouse_wheel_button);
 
-
         double mouseWheelThreshold = 10 * prefs.getFloat("default_wheel_sensitivity", 0.3f);
 
         dragListener = new MouseButtonDragListener(
@@ -298,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private void initUserActivityManager() {
         this.userActivityManager = new UserActivityManager(mHandler);
-        userActivityMonitorThread =new Thread(userActivityManager);
+        userActivityMonitorThread = new Thread(userActivityManager);
         userActivityMonitorThread.start();
     }
 
@@ -357,6 +358,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
         this.mouseSensitivity = 5 * prefs.getFloat("default_sensitivity", 0.2f);
+        sendMouseSensitivityToClient();
+
         setMouseSensitivityText();
 
         initButtonTouchListeners();
@@ -381,6 +384,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat greyMat = inputFrame.gray();
+        // Mat updatedGreyMat = new Mat();
+
+        // Imgproc.resize(greyMat, updatedGreyMat, new Size(), 0.005, 0.005, Imgproc.INTER_AREA);
+
+        // greyMat = updatedGreyMat;
 
         MatOfPoint2f keypointsFound = new MatOfPoint2f();
 
@@ -454,13 +462,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 return true;
             case BEGIN_BLUETOOTH:
                 this.messageDispatcher.enableConnections();
-
-                String defaultSensitivity = PreferenceManager.getDefaultSharedPreferences(this).getString("default_sensitivity", "2.0");
-
-                this.messageDispatcher.sendMouseSensitivityMessage(new MouseSensitivityMessage(Double.parseDouble(defaultSensitivity)));
-
+                sendMouseSensitivityToClient();
                 return true;
         }
         return false;
+    }
+
+    private void sendMouseSensitivityToClient() {
+        double defaultSensitivity = 5.0 * PreferenceManager.getDefaultSharedPreferences(this).getFloat("default_sensitivity", 0.2f);
+        if (this.messageDispatcher == null) return;
+        this.messageDispatcher.sendMouseSensitivityMessage(new MouseSensitivityMessage(defaultSensitivity));
     }
 }
