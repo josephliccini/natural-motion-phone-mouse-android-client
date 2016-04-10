@@ -1,5 +1,6 @@
 package com.github.josephliccini.naturalmotionphonemouseandroidclient;
 
+import android.content.res.Resources;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -19,6 +20,7 @@ public class MouseButtonDragListener extends UserActivityObservable implements V
     private Date buttonDown;
     private final Vibrator vib;
     private final MessageDispatcher messageDispatcher;
+    private final double SCREEN_HEIGHT = Resources.getSystem().getDisplayMetrics().heightPixels;
 
     public MouseButtonDragListener(MessageDispatcher messageDispatcher, Vibrator vib, double threshold) {
         this.messageDispatcher = messageDispatcher;
@@ -41,7 +43,10 @@ public class MouseButtonDragListener extends UserActivityObservable implements V
             case MotionEvent.ACTION_MOVE:
                 double eventY = event.getY() - offset;
 
-                if (Math.abs(eventY - initialY) > threshold) {
+                double percentOfScreenMoved = Math.abs((eventY - initialY) / SCREEN_HEIGHT) * 100.0;
+                Log.d("PercentMoved", "" + percentOfScreenMoved);
+
+                if (percentOfScreenMoved > threshold) {
                     MouseWheelDelta mouseWheelDelta = null;
 
                     if (eventY < prevY) {
@@ -61,9 +66,7 @@ public class MouseButtonDragListener extends UserActivityObservable implements V
                 break;
             case MotionEvent.ACTION_UP:
                 Date buttonUp = new Date();
-                long difference = buttonUp.getTime() - buttonDown.getTime();
-                long millisecondsElapsed = difference;
-                Log.d("ButtonUpDownMouseWheel", "" + millisecondsElapsed);
+                long millisecondsElapsed = buttonUp.getTime() - buttonDown.getTime();
 
                 if (millisecondsElapsed < 150) {
                     messageDispatcher.sendMouseButtonAction(MouseButtonAction.MIDDLE_PRESS);

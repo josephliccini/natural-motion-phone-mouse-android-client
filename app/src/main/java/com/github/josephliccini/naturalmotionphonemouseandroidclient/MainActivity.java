@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         final View mouseWheelButton = this.findViewById(R.id.mouse_wheel_button);
 
 
-        double mouseWheelThreshold = Double.parseDouble(prefs.getString("default_wheel_sensitivity", "10"));
+        double mouseWheelThreshold = 10 * prefs.getFloat("default_wheel_sensitivity", 0.3f);
 
         dragListener = new MouseButtonDragListener(
                 messageDispatcher, vib, mouseWheelThreshold);
@@ -352,11 +352,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         if (dragListener != null) {
-            double thresholdValue = Double.parseDouble(prefs.getString("default_wheel_sensitivity", "10"));
+            double thresholdValue = 10 * prefs.getFloat("default_wheel_sensitivity", 0.3f);
             this.dragListener.setThreshold(thresholdValue);
         }
 
-        this.mouseSensitivity = Double.parseDouble(prefs.getString("default_sensitivity", "2.0"));
+        this.mouseSensitivity = 5 * prefs.getFloat("default_sensitivity", 0.2f);
+        setMouseSensitivityText();
+
         initButtonTouchListeners();
 
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, this, mLoaderCallback);

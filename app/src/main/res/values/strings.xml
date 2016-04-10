@@ -27,8 +27,29 @@
         Swap L and R Click
     </string>
 
-    <string name="pref_title_default_sensitivity">Default Sensitivity</string>
+    <string name="pref_title_default_sensitivity">Default Sensitivity Multiplier</string>
 
-    <string name="pref_title_default_wheel_sensitivity">Wheel Sensitivity</string>
+    <string name="pref_title_default_wheel_sensitivity">Wheel Sensitivity Multiplier</string>
+
+    <item name="mouse_slider_default" format="float" type="string">0.1</item>
+    <item name="wheel_slider_default" format="float" type="string">0.2</item>
+
+    <string-array name="wheel_slider_summaries">
+        <item>High</item>
+        <item>Medium-High</item>
+        <item>Medium</item>
+        <item>Medium-Low</item>
+        <item>Low</item>
+    </string-array>
+
+    <string-array name="mouse_slider_summaries">
+        <item>Low</item>
+        <item>Medium-Low</item>
+        <item>Medium</item>
+        <item>Medium-High</item>
+        <item>High</item>
+    </string-array>
+    <string name="mouse_slider_dialog_message">Higher Is More Sensitive</string>
+    <string name="wheel_slider_dialog_message">Lower Is More Sensitive</string>
 
 </resources>

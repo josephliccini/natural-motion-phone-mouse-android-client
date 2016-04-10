@@ -1,2 +1,4 @@
 include ':app'
 include ':openCVLibrary310'
+include ':app', ':SliderPreference'
+project(':SliderPreference').projectDir = new File('libs/SliderPreference')

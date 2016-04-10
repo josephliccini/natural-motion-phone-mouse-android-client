@@ -5,22 +5,18 @@
         android:key="left_right_swap"
         android:title="@string/pref_title_left_right_swap" />
 
-    <!-- NOTE: EditTextPreference accepts EditText attributes. -->
-    <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
-    <EditTextPreference
-        android:defaultValue="1.5"
-        android:inputType="numberDecimal"
+    <net.jayschwa.android.preference.SliderPreference
+        android:summary="@array/mouse_slider_summaries"
+        android:defaultValue="@string/mouse_slider_default"
         android:key="default_sensitivity"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:title="@string/pref_title_default_sensitivity" />
+        android:title="@string/pref_title_default_sensitivity"
+        android:dialogMessage="@string/mouse_slider_dialog_message" />
 
-    <EditTextPreference
-        android:defaultValue="10.0"
-        android:inputType="numberDecimal"
+    <net.jayschwa.android.preference.SliderPreference
+        android:summary="@array/wheel_slider_summaries"
+        android:defaultValue="@string/wheel_slider_default"
         android:key="default_wheel_sensitivity"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:title="@string/pref_title_default_wheel_sensitivity" />
+        android:title="@string/pref_title_default_wheel_sensitivity"
+        android:dialogMessage="@string/mouse_slider_dialog_message" />
 
 </PreferenceScreen>
